@@ -1,6 +1,6 @@
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '../lib/supabase';
-import type { Member, BeltProgress, Discipline, BeltRank } from '../types';
+import type { Member, BeltProgress, Discipline, BeltRank, MemberRole } from '../types';
 
 // Map database discipline slugs to our Discipline type
 function mapDiscipline(slug: string): Discipline | null {
@@ -26,6 +26,12 @@ function mapBeltRank(color: string): BeltRank {
     'black': 'black',
   };
   return mapping[color] ?? 'white';
+}
+
+// Map database role to our MemberRole type
+function mapRole(role: string): MemberRole | undefined {
+  const validRoles: MemberRole[] = ['admin', 'medewerker', 'coordinator', 'coach', 'fighter', 'fan'];
+  return validRoles.includes(role as MemberRole) ? (role as MemberRole) : undefined;
 }
 
 // Transform raw database result to our Member type
@@ -54,6 +60,7 @@ function transformMember(raw: Record<string, unknown>): Member {
     id: String(raw.id),
     name: `${raw.first_name} ${raw.last_name}`,
     photo_url: raw.profile_picture_url ? String(raw.profile_picture_url) : undefined,
+    role: raw.role ? mapRole(String(raw.role)) : undefined,
     belts,
   };
 }
@@ -62,6 +69,7 @@ export function useMembers() {
   return useQuery({
     queryKey: ['members-with-belts'],
     queryFn: async (): Promise<Member[]> => {
+      // First, let's log what we're getting from the database for debugging
       const { data, error } = await supabase
         .from('members')
         .select(`
@@ -70,6 +78,7 @@ export function useMembers() {
           last_name,
           profile_picture_url,
           status,
+          role,
           member_belts (
             belt_color,
             stripes,
@@ -89,10 +98,15 @@ export function useMembers() {
 
       if (!data) return [];
 
+      // Log raw data for debugging
+      console.log('Raw members data:', data);
+
       // Filter to only members with at least one belt
       const membersWithBelts = data
         .map((row) => transformMember(row as Record<string, unknown>))
         .filter((m) => m.belts.length > 0);
+
+      console.log('Transformed members:', membersWithBelts);
 
       return membersWithBelts;
     },

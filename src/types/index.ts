@@ -21,11 +21,25 @@ export interface BeltProgress {
   stripes: number; // 0-4
 }
 
+// Member roles from CRM
+export type MemberRole = 'admin' | 'medewerker' | 'coordinator' | 'coach' | 'fighter' | 'fan';
+
+// Role display configuration
+export const ROLE_DISPLAY: Record<MemberRole, { label: string; color: string; textColor: string }> = {
+  'admin': { label: 'Admin', color: '#DC2626', textColor: '#FFFFFF' },
+  'medewerker': { label: 'Staff', color: '#7C3AED', textColor: '#FFFFFF' },
+  'coordinator': { label: 'Coordinator', color: '#2563EB', textColor: '#FFFFFF' },
+  'coach': { label: 'Coach', color: '#F59E0B', textColor: '#1C1917' },
+  'fighter': { label: 'Fighter', color: '#059669', textColor: '#FFFFFF' },
+  'fan': { label: 'Fan', color: '#6B7280', textColor: '#FFFFFF' },
+} as const;
+
 export interface Member {
   id: string;
   name: string;
   photo_url?: string;
   belts: BeltProgress[]; // Max 2-3 disciplines
+  role?: MemberRole;
   joined_at?: string;
   gym_id?: string;
 }

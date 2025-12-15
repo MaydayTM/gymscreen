@@ -1,5 +1,5 @@
 import type { Member, BeltProgress } from '../../types';
-import { BELT_COLORS, BELT_ORDER } from '../../types';
+import { BELT_COLORS, BELT_ORDER, ROLE_DISPLAY } from '../../types';
 import { BeltBadge } from './BeltBadge';
 
 interface MemberCardProps {
@@ -25,8 +25,6 @@ export function MemberCard({ member }: MemberCardProps) {
     .sort((a, b) => BELT_ORDER[a.rank] - BELT_ORDER[b.rank])
     .slice(0, 2);
 
-  const hasMultipleBelts = displayBelts.length > 1;
-
   // Generate initials for avatar fallback
   const initials = member.name
     .split(' ')
@@ -35,25 +33,41 @@ export function MemberCard({ member }: MemberCardProps) {
     .toUpperCase()
     .slice(0, 2);
 
+  // Get role display info
+  const roleInfo = member.role ? ROLE_DISPLAY[member.role] : null;
+
   return (
     <div
-      className="relative bg-neutral-900/80 backdrop-blur-sm rounded-xl p-4 flex flex-col items-center gap-3 border border-neutral-800/50 transition-all duration-300"
+      className="relative bg-neutral-900/80 backdrop-blur-sm rounded-xl p-4 flex flex-col items-center gap-2 border border-neutral-800/50 transition-all duration-300"
       style={{
         boxShadow: `0 0 30px -10px ${primaryColor}33`,
       }}
     >
+      {/* Role badge - top right */}
+      {roleInfo && (
+        <div
+          className="absolute -top-1.5 -right-1.5 px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wide shadow-lg"
+          style={{
+            backgroundColor: roleInfo.color,
+            color: roleInfo.textColor,
+          }}
+        >
+          {roleInfo.label}
+        </div>
+      )}
+
       {/* Avatar */}
       <div className="relative">
         {member.photo_url ? (
           <img
             src={member.photo_url}
             alt={member.name}
-            className="w-16 h-16 rounded-full object-cover border-2"
+            className="w-14 h-14 rounded-full object-cover border-2"
             style={{ borderColor: primaryColor }}
           />
         ) : (
           <div
-            className="w-16 h-16 rounded-full flex items-center justify-center text-lg font-bold text-white border-2"
+            className="w-14 h-14 rounded-full flex items-center justify-center text-base font-bold text-white border-2"
             style={{
               background: `linear-gradient(135deg, ${primaryColor}40 0%, ${primaryColor}20 100%)`,
               borderColor: primaryColor,
@@ -71,12 +85,12 @@ export function MemberCard({ member }: MemberCardProps) {
       </div>
 
       {/* Name */}
-      <h3 className="text-base font-semibold text-white text-center leading-tight">
+      <h3 className="text-sm font-semibold text-white text-center leading-tight">
         {member.name}
       </h3>
 
       {/* Belt Badges - stacked vertically */}
-      <div className="flex flex-col gap-1.5 items-center">
+      <div className="flex flex-col gap-2 items-center">
         {displayBelts.map((belt) => (
           <BeltBadge
             key={belt.discipline}
@@ -84,7 +98,7 @@ export function MemberCard({ member }: MemberCardProps) {
             stripes={belt.stripes}
             discipline={belt.discipline}
             size="sm"
-            showLabel={hasMultipleBelts}
+            showDiscipline={true}
           />
         ))}
       </div>

@@ -1,5 +1,7 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { BeltWall } from './components/slides/BeltWall'
+import { Schedule } from './components/slides/Schedule'
+import { Announcements } from './components/slides/Announcements'
 import { SlideController } from './components/layout/SlideController'
 import { useMembers } from './hooks/useMembers'
 
@@ -17,7 +19,7 @@ function GymScreenDisplay() {
       <div className="h-screen w-screen bg-neutral-950 flex items-center justify-center">
         <div className="text-center">
           <div className="w-12 h-12 border-4 border-amber-500 border-t-transparent rounded-full animate-spin mx-auto mb-4" />
-          <p className="text-neutral-400">Loading members...</p>
+          <p className="text-neutral-400">Loading...</p>
         </div>
       </div>
     )
@@ -46,9 +48,36 @@ function GymScreenDisplay() {
       ),
       duration: 30,
     },
+    {
+      id: 'schedule' as const,
+      component: (
+        <Schedule
+          mode="today"
+          title="Vandaag"
+          subtitle="Reconnect Academy"
+        />
+      ),
+      duration: 20,
+    },
+    {
+      id: 'schedule' as const,
+      component: (
+        <Schedule
+          mode="week"
+          title="Lesrooster"
+          subtitle="Reconnect Academy"
+        />
+      ),
+      duration: 25,
+    },
+    {
+      id: 'announcements' as const,
+      component: (
+        <Announcements subtitle="Reconnect Academy" />
+      ),
+      duration: 20,
+    },
     // Future slides:
-    // { id: 'schedule', component: <Schedule />, duration: 20 },
-    // { id: 'announcements', component: <Announcements />, duration: 15 },
     // { id: 'spotlight', component: <FighterSpotlight />, duration: 25 },
   ]
 

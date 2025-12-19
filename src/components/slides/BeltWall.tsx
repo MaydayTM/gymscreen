@@ -84,7 +84,7 @@ export function BeltWall({
       />
 
       {/* Header - Compact for landscape */}
-      <header className="relative z-10 flex-shrink-0 flex items-center justify-between mb-8 px-2">
+      <header className="relative z-10 flex-shrink-0 flex items-center justify-between mb-4 px-2">
         <div>
           <p className="text-sm text-amber-500 font-medium tracking-wider uppercase">
             {subtitle}
@@ -119,10 +119,10 @@ export function BeltWall({
       </header>
 
       {/* Members Grid - 5x3 for 15 items per page */}
-      <div className="flex-1 relative z-10 flex items-center justify-center min-h-0">
-        <div className="grid grid-cols-5 grid-rows-3 gap-5 w-full h-full">
+      <div className="flex-1 relative z-10 min-h-0 pt-4">
+        <div className="grid grid-cols-5 grid-rows-3 gap-x-5 gap-y-8 w-full h-full">
           {currentMembers.map((member) => (
-            <div key={member.id} className="flex items-center justify-center">
+            <div key={member.id} className="flex items-start justify-center">
               <MemberCard member={member} />
             </div>
           ))}

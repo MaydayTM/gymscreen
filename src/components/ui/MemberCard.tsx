@@ -38,7 +38,7 @@ export function MemberCard({ member }: MemberCardProps) {
 
   return (
     <div
-      className="relative bg-neutral-900/80 backdrop-blur-sm rounded-2xl p-5 flex flex-col items-center gap-3 border border-neutral-800/50 transition-all duration-300"
+      className="relative bg-neutral-900/80 backdrop-blur-sm rounded-2xl p-4 flex flex-row items-center gap-5 border border-neutral-800/50 transition-all duration-300 w-full h-full"
       style={{
         boxShadow: `0 0 40px -10px ${primaryColor}40`,
       }}
@@ -46,7 +46,7 @@ export function MemberCard({ member }: MemberCardProps) {
       {/* Role badge - top right */}
       {roleInfo && (
         <div
-          className="absolute -top-2 -right-2 px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wide shadow-lg"
+          className="absolute -top-3 -right-3 px-4 py-1.5 rounded-full text-sm font-bold uppercase tracking-wide shadow-lg"
           style={{
             backgroundColor: roleInfo.color,
             color: roleInfo.textColor,
@@ -56,22 +56,22 @@ export function MemberCard({ member }: MemberCardProps) {
         </div>
       )}
 
-      {/* Avatar - larger for TV visibility */}
-      <div className="relative">
+      {/* Avatar - much larger for TV visibility */}
+      <div className="relative flex-shrink-0">
         {member.photo_url ? (
           <img
             src={member.photo_url}
             alt={member.name}
-            className="w-24 h-24 rounded-full object-cover border-3"
-            style={{ borderColor: primaryColor, borderWidth: '3px' }}
+            className="w-28 h-28 rounded-full object-cover"
+            style={{ borderColor: primaryColor, borderWidth: '4px', borderStyle: 'solid' }}
           />
         ) : (
           <div
-            className="w-24 h-24 rounded-full flex items-center justify-center text-2xl font-bold text-white"
+            className="w-28 h-28 rounded-full flex items-center justify-center text-3xl font-bold text-white"
             style={{
               background: `linear-gradient(135deg, ${primaryColor}40 0%, ${primaryColor}20 100%)`,
               borderColor: primaryColor,
-              borderWidth: '3px',
+              borderWidth: '4px',
               borderStyle: 'solid',
             }}
           >
@@ -86,30 +86,33 @@ export function MemberCard({ member }: MemberCardProps) {
         />
       </div>
 
-      {/* Name - split into first name and last name on two lines */}
-      <div className="text-center leading-tight">
-        <p className="text-lg font-semibold text-white">
-          {member.name.split(' ')[0]}
-        </p>
-        {member.name.split(' ').length > 1 && (
-          <p className="text-sm font-medium text-neutral-400">
-            {member.name.split(' ').slice(1).join(' ')}
+      {/* Name and Belts - right side */}
+      <div className="flex flex-col justify-center gap-2 min-w-0 flex-1">
+        {/* Name - larger text for TV */}
+        <div className="leading-tight">
+          <p className="text-2xl font-bold text-white truncate">
+            {member.name.split(' ')[0]}
           </p>
-        )}
-      </div>
+          {member.name.split(' ').length > 1 && (
+            <p className="text-lg font-medium text-neutral-400 truncate">
+              {member.name.split(' ').slice(1).join(' ')}
+            </p>
+          )}
+        </div>
 
-      {/* Belt Badges - stacked vertically, medium size for visibility */}
-      <div className="flex flex-col gap-2 items-center">
-        {displayBelts.map((belt) => (
-          <BeltBadge
-            key={belt.discipline}
-            rank={belt.rank}
-            stripes={belt.stripes}
-            discipline={belt.discipline}
-            size="md"
-            showDiscipline={true}
-          />
-        ))}
+        {/* Belt Badges - horizontal layout */}
+        <div className="flex flex-col gap-1.5">
+          {displayBelts.map((belt) => (
+            <BeltBadge
+              key={belt.discipline}
+              rank={belt.rank}
+              stripes={belt.stripes}
+              discipline={belt.discipline}
+              size="lg"
+              showDiscipline={true}
+            />
+          ))}
+        </div>
       </div>
     </div>
   );

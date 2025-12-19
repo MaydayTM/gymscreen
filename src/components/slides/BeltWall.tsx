@@ -27,7 +27,7 @@ export function BeltWall({
   members,
   title = 'Belt Wall',
   subtitle = 'Reconnect Academy',
-  itemsPerPage = 15,
+  itemsPerPage = 10,
   rotationInterval = 10000,
 }: BeltWallProps) {
   const [currentPage, setCurrentPage] = useState(0);
@@ -118,11 +118,11 @@ export function BeltWall({
         <div className="h-12 w-1 bg-gradient-to-b from-amber-500 to-orange-600 rounded-full" />
       </header>
 
-      {/* Members Grid - 5x3 for 15 items per page */}
-      <div className="flex-1 relative z-10 min-h-0 pt-4">
-        <div className="grid grid-cols-5 grid-rows-3 gap-x-3 gap-y-44 w-full h-full">
+      {/* Members Grid - 5x2 for 10 items per page */}
+      <div className="flex-1 relative z-10 min-h-0 pt-6">
+        <div className="grid grid-cols-5 grid-rows-2 gap-6 w-full h-full">
           {currentMembers.map((member) => (
-            <div key={member.id} className="flex items-start justify-center">
+            <div key={member.id} className="flex items-center justify-center">
               <MemberCard member={member} />
             </div>
           ))}

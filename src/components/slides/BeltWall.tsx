@@ -120,7 +120,7 @@ export function BeltWall({
 
       {/* Members Grid - 5x3 for 15 items per page */}
       <div className="flex-1 relative z-10 min-h-0 pt-4">
-        <div className="grid grid-cols-5 grid-rows-3 gap-x-5 gap-y-12 w-full h-full">
+        <div className="grid grid-cols-5 grid-rows-3 gap-x-5 gap-y-20 w-full h-full">
           {currentMembers.map((member) => (
             <div key={member.id} className="flex items-start justify-center">
               <MemberCard member={member} />

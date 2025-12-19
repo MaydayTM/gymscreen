@@ -1,3 +1,4 @@
+import { useState, useEffect } from 'react';
 import type { Member } from '../../types';
 import { BELT_ORDER } from '../../types';
 import { MemberCard } from '../ui/MemberCard';
@@ -6,6 +7,8 @@ interface BeltWallProps {
   members: Member[];
   title?: string;
   subtitle?: string;
+  itemsPerPage?: number;
+  rotationInterval?: number; // in milliseconds
 }
 
 // Get highest belt rank for a member (for sorting)
@@ -24,16 +27,54 @@ export function BeltWall({
   members,
   title = 'Belt Wall',
   subtitle = 'Reconnect Academy',
+  itemsPerPage = 15,
+  rotationInterval = 10000,
 }: BeltWallProps) {
-  // Sort members by highest belt rank, then by stripes
+  const [currentPage, setCurrentPage] = useState(0);
+
+  // Sort members: coaches first, then by highest belt rank, then stripes, then alphabetically
   const sortedMembers = [...members].sort((a, b) => {
+    // 1. Coaches come first
+    const aIsCoach = a.role === 'coach';
+    const bIsCoach = b.role === 'coach';
+    if (aIsCoach && !bIsCoach) return -1;
+    if (!aIsCoach && bIsCoach) return 1;
+
+    // 2. Sort by highest belt rank (lower number = higher rank)
     const rankDiff = getHighestBeltOrder(a) - getHighestBeltOrder(b);
     if (rankDiff !== 0) return rankDiff;
-    return getHighestStripes(b) - getHighestStripes(a);
+
+    // 3. Sort by stripes (more stripes = higher)
+    const stripeDiff = getHighestStripes(b) - getHighestStripes(a);
+    if (stripeDiff !== 0) return stripeDiff;
+
+    // 4. Sort alphabetically by name
+    return a.name.localeCompare(b.name);
   });
 
+  // Calculate pagination
+  const totalPages = Math.ceil(sortedMembers.length / itemsPerPage);
+  const startIndex = currentPage * itemsPerPage;
+  const currentMembers = sortedMembers.slice(startIndex, startIndex + itemsPerPage);
+
+  // Auto-rotate pages
+  useEffect(() => {
+    if (totalPages <= 1) return;
+
+    const timer = setInterval(() => {
+      setCurrentPage((prev) => (prev + 1) % totalPages);
+    }, rotationInterval);
+
+    return () => clearInterval(timer);
+  }, [totalPages, rotationInterval]);
+
+  // Reset to first page when members change
+  useEffect(() => {
+    setCurrentPage(0);
+  }, [members.length]);
+
   return (
-    <div className="h-screen w-screen bg-gradient-to-br from-neutral-950 via-neutral-900 to-neutral-950 p-6 flex flex-col overflow-hidden">
+    <div className="h-screen w-screen bg-gradient-to-br from-neutral-950 via-neutral-900 to-neutral-950 p-8 flex flex-col overflow-hidden">
       {/* Background pattern */}
       <div
         className="fixed inset-0 opacity-5 pointer-events-none"
@@ -43,7 +84,7 @@ export function BeltWall({
       />
 
       {/* Header - Compact for landscape */}
-      <header className="relative z-10 flex items-center justify-between mb-4 px-2">
+      <header className="relative z-10 flex items-center justify-between mb-6 px-2">
         <div>
           <p className="text-sm text-amber-500 font-medium tracking-wider uppercase">
             {subtitle}
@@ -52,21 +93,45 @@ export function BeltWall({
             {title}
           </h1>
         </div>
+
+        {/* Page indicator */}
+        {totalPages > 1 && (
+          <div className="flex items-center gap-3">
+            <div className="flex gap-2">
+              {Array.from({ length: totalPages }).map((_, i) => (
+                <div
+                  key={i}
+                  className={`w-2.5 h-2.5 rounded-full transition-all duration-300 ${
+                    i === currentPage
+                      ? 'bg-amber-500 scale-125'
+                      : 'bg-neutral-600'
+                  }`}
+                />
+              ))}
+            </div>
+            <span className="text-neutral-500 text-sm font-medium">
+              {currentPage + 1} / {totalPages}
+            </span>
+          </div>
+        )}
+
         <div className="h-12 w-1 bg-gradient-to-b from-amber-500 to-orange-600 rounded-full" />
       </header>
 
-      {/* Members Grid - Optimized for landscape 16:9 TV */}
-      <div className="flex-1 relative z-10 flex items-center">
-        <div className="grid grid-cols-4 md:grid-cols-5 lg:grid-cols-6 xl:grid-cols-7 2xl:grid-cols-8 gap-3 w-full">
-          {sortedMembers.map((member) => (
-            <MemberCard key={member.id} member={member} />
+      {/* Members Grid - 5x3 for 15 items per page */}
+      <div className="flex-1 relative z-10 flex items-center justify-center">
+        <div className="grid grid-cols-5 grid-rows-3 gap-5 w-full h-full max-h-[calc(100vh-180px)]">
+          {currentMembers.map((member) => (
+            <div key={member.id} className="flex items-center justify-center">
+              <MemberCard member={member} />
+            </div>
           ))}
         </div>
       </div>
 
       {/* Footer - Minimal */}
-      <footer className="relative z-10 text-center mt-3">
-        <p className="text-neutral-600 text-xs">
+      <footer className="relative z-10 text-center mt-4">
+        <p className="text-neutral-600 text-sm">
           OSS! Train hard. Stay humble.
         </p>
       </footer>

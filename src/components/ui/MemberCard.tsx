@@ -38,15 +38,15 @@ export function MemberCard({ member }: MemberCardProps) {
 
   return (
     <div
-      className="relative bg-neutral-900/80 backdrop-blur-sm rounded-xl p-4 flex flex-col items-center gap-2 border border-neutral-800/50 transition-all duration-300"
+      className="relative bg-neutral-900/80 backdrop-blur-sm rounded-2xl p-5 flex flex-col items-center gap-3 border border-neutral-800/50 transition-all duration-300"
       style={{
-        boxShadow: `0 0 30px -10px ${primaryColor}33`,
+        boxShadow: `0 0 40px -10px ${primaryColor}40`,
       }}
     >
       {/* Role badge - top right */}
       {roleInfo && (
         <div
-          className="absolute -top-1.5 -right-1.5 px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wide shadow-lg"
+          className="absolute -top-2 -right-2 px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wide shadow-lg"
           style={{
             backgroundColor: roleInfo.color,
             color: roleInfo.textColor,
@@ -56,21 +56,23 @@ export function MemberCard({ member }: MemberCardProps) {
         </div>
       )}
 
-      {/* Avatar */}
+      {/* Avatar - larger for TV visibility */}
       <div className="relative">
         {member.photo_url ? (
           <img
             src={member.photo_url}
             alt={member.name}
-            className="w-14 h-14 rounded-full object-cover border-2"
-            style={{ borderColor: primaryColor }}
+            className="w-24 h-24 rounded-full object-cover border-3"
+            style={{ borderColor: primaryColor, borderWidth: '3px' }}
           />
         ) : (
           <div
-            className="w-14 h-14 rounded-full flex items-center justify-center text-base font-bold text-white border-2"
+            className="w-24 h-24 rounded-full flex items-center justify-center text-2xl font-bold text-white"
             style={{
               background: `linear-gradient(135deg, ${primaryColor}40 0%, ${primaryColor}20 100%)`,
               borderColor: primaryColor,
+              borderWidth: '3px',
+              borderStyle: 'solid',
             }}
           >
             {initials}
@@ -79,17 +81,17 @@ export function MemberCard({ member }: MemberCardProps) {
 
         {/* Belt color ring accent */}
         <div
-          className="absolute -inset-0.5 rounded-full opacity-20 blur-sm -z-10"
+          className="absolute -inset-1 rounded-full opacity-25 blur-md -z-10"
           style={{ backgroundColor: primaryColor }}
         />
       </div>
 
-      {/* Name */}
-      <h3 className="text-sm font-semibold text-white text-center leading-tight">
+      {/* Name - larger text for TV */}
+      <h3 className="text-lg font-semibold text-white text-center leading-tight">
         {member.name}
       </h3>
 
-      {/* Belt Badges - stacked vertically */}
+      {/* Belt Badges - stacked vertically, medium size for visibility */}
       <div className="flex flex-col gap-2 items-center">
         {displayBelts.map((belt) => (
           <BeltBadge
@@ -97,7 +99,7 @@ export function MemberCard({ member }: MemberCardProps) {
             rank={belt.rank}
             stripes={belt.stripes}
             discipline={belt.discipline}
-            size="sm"
+            size="md"
             showDiscipline={true}
           />
         ))}

@@ -86,10 +86,17 @@ export function MemberCard({ member }: MemberCardProps) {
         />
       </div>
 
-      {/* Name - larger text for TV */}
-      <h3 className="text-lg font-semibold text-white text-center leading-tight">
-        {member.name}
-      </h3>
+      {/* Name - split into first name and last name on two lines */}
+      <div className="text-center leading-tight">
+        <p className="text-lg font-semibold text-white">
+          {member.name.split(' ')[0]}
+        </p>
+        {member.name.split(' ').length > 1 && (
+          <p className="text-sm font-medium text-neutral-400">
+            {member.name.split(' ').slice(1).join(' ')}
+          </p>
+        )}
+      </div>
 
       {/* Belt Badges - stacked vertically, medium size for visibility */}
       <div className="flex flex-col gap-2 items-center">

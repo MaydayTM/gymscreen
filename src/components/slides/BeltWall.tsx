@@ -74,7 +74,7 @@ export function BeltWall({
   }, [members.length]);
 
   return (
-    <div className="h-screen w-screen bg-gradient-to-br from-neutral-950 via-neutral-900 to-neutral-950 p-8 flex flex-col overflow-hidden">
+    <div className="h-screen w-screen bg-gradient-to-br from-neutral-950 via-neutral-900 to-neutral-950 px-8 pt-8 pb-4 flex flex-col overflow-hidden">
       {/* Background pattern */}
       <div
         className="fixed inset-0 opacity-5 pointer-events-none"
@@ -84,7 +84,7 @@ export function BeltWall({
       />
 
       {/* Header - Compact for landscape */}
-      <header className="relative z-10 flex items-center justify-between mb-6 px-2">
+      <header className="relative z-10 flex-shrink-0 flex items-center justify-between mb-8 px-2">
         <div>
           <p className="text-sm text-amber-500 font-medium tracking-wider uppercase">
             {subtitle}
@@ -119,8 +119,8 @@ export function BeltWall({
       </header>
 
       {/* Members Grid - 5x3 for 15 items per page */}
-      <div className="flex-1 relative z-10 flex items-center justify-center">
-        <div className="grid grid-cols-5 grid-rows-3 gap-5 w-full h-full max-h-[calc(100vh-180px)]">
+      <div className="flex-1 relative z-10 flex items-center justify-center min-h-0">
+        <div className="grid grid-cols-5 grid-rows-3 gap-5 w-full h-full">
           {currentMembers.map((member) => (
             <div key={member.id} className="flex items-center justify-center">
               <MemberCard member={member} />

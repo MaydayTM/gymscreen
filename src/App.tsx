@@ -3,65 +3,84 @@ import { BeltWall } from './components/slides/BeltWall'
 import { Schedule } from './components/slides/Schedule'
 import { Announcements } from './components/slides/Announcements'
 import { BirthdaySpotlight } from './components/slides/BirthdaySpotlight'
+import { Slideshow } from './components/slides/Slideshow'
 import { SlideController } from './components/layout/SlideController'
 import { useMembers } from './hooks/useMembers'
 import { useTodaysBirthdays } from './hooks/useBirthdays'
+import { useGymScreenSettings, getEffectiveSettings } from './hooks/useGymScreenSettings'
+import { useSlides } from './hooks/useSlides'
 
 const queryClient = new QueryClient()
 
-// Main display component that uses real data
+// Loading spinner component
+function LoadingScreen({ message = 'Loading...' }: { message?: string }) {
+  return (
+    <div className="h-screen w-screen bg-neutral-950 flex items-center justify-center">
+      <div className="text-center">
+        <div className="w-12 h-12 border-4 border-amber-500 border-t-transparent rounded-full animate-spin mx-auto mb-4" />
+        <p className="text-neutral-400">{message}</p>
+      </div>
+    </div>
+  )
+}
+
+// Error screen component
+function ErrorScreen({ message }: { message: string }) {
+  return (
+    <div className="h-screen w-screen bg-neutral-950 flex items-center justify-center">
+      <div className="text-center text-red-500">
+        <p className="text-xl mb-2">Error loading data</p>
+        <p className="text-sm text-neutral-500">{message}</p>
+      </div>
+    </div>
+  )
+}
+
+// Main display component that uses CRM settings
 function GymScreenDisplay() {
   const { data: members, isLoading: membersLoading, error: membersError } = useMembers()
   const { data: birthdayMembers } = useTodaysBirthdays()
+  const { data: settings, isLoading: settingsLoading } = useGymScreenSettings()
+  const { data: crmSlides } = useSlides(true) // Only active slides
 
   // Enable debug controls with ?debug in URL
   const showControls = window.location.search.includes('debug')
 
-  if (membersLoading) {
-    return (
-      <div className="h-screen w-screen bg-neutral-950 flex items-center justify-center">
-        <div className="text-center">
-          <div className="w-12 h-12 border-4 border-amber-500 border-t-transparent rounded-full animate-spin mx-auto mb-4" />
-          <p className="text-neutral-400">Loading...</p>
-        </div>
-      </div>
-    )
+  if (membersLoading || settingsLoading) {
+    return <LoadingScreen />
   }
 
   if (membersError) {
-    return (
-      <div className="h-screen w-screen bg-neutral-950 flex items-center justify-center">
-        <div className="text-center text-red-500">
-          <p className="text-xl mb-2">Error loading data</p>
-          <p className="text-sm text-neutral-500">{String(membersError)}</p>
-        </div>
-      </div>
-    )
+    return <ErrorScreen message={String(membersError)} />
   }
 
-  // Build slides array - birthday spotlight only if there are birthdays today
-  const hasBirthdays = birthdayMembers && birthdayMembers.length > 0
+  // Get effective settings (with defaults)
+  const effectiveSettings = getEffectiveSettings(settings)
 
-  const slides = [
-    // Birthday spotlight - only shown if there are birthdays today
-    // Shows at the START for maximum visibility
-    ...(hasBirthdays
-      ? [
-          {
-            id: 'birthday' as const,
-            component: (
-              <BirthdaySpotlight
-                birthdayMembers={birthdayMembers}
-                subtitle="Reconnect Academy"
-                rotationInterval={10000}
-              />
-            ),
-            // Duration depends on number of birthday members (10 sec each)
-            duration: birthdayMembers.length * 10,
-          },
-        ]
-      : []),
-    {
+  // Build slides array based on CRM settings
+  const hasBirthdays = birthdayMembers && birthdayMembers.length > 0
+  const hasSlides = crmSlides && crmSlides.length > 0
+
+  const slides = []
+
+  // Birthday spotlight - only if enabled AND there are birthdays today
+  if (effectiveSettings.show_birthdays && hasBirthdays) {
+    slides.push({
+      id: 'birthday' as const,
+      component: (
+        <BirthdaySpotlight
+          birthdayMembers={birthdayMembers}
+          subtitle="Reconnect Academy"
+          rotationInterval={10000}
+        />
+      ),
+      duration: birthdayMembers.length * 10,
+    })
+  }
+
+  // Belt Wall - if enabled
+  if (effectiveSettings.show_belt_wall) {
+    slides.push({
       id: 'belt-wall' as const,
       component: (
         <BeltWall
@@ -70,8 +89,31 @@ function GymScreenDisplay() {
           subtitle="Reconnect Academy"
         />
       ),
-      duration: 30,
-    },
+      duration: effectiveSettings.section_rotation_interval,
+    })
+  }
+
+  // CRM Slideshow - if enabled AND there are slides
+  if (effectiveSettings.show_slideshow && hasSlides) {
+    slides.push({
+      id: 'slideshow' as const,
+      component: (
+        <Slideshow
+          slides={crmSlides}
+          interval={effectiveSettings.slideshow_interval}
+          subtitle="Reconnect Academy"
+        />
+      ),
+      // Total duration = sum of all slide durations, or interval * count
+      duration: crmSlides.reduce(
+        (total, slide) => total + (slide.display_duration || effectiveSettings.slideshow_interval),
+        0
+      ),
+    })
+  }
+
+  // Schedule - always show (no toggle in settings yet)
+  slides.push(
     {
       id: 'schedule' as const,
       component: (
@@ -93,21 +135,25 @@ function GymScreenDisplay() {
         />
       ),
       duration: 25,
-    },
-    {
+    }
+  )
+
+  // Announcements - if enabled
+  if (effectiveSettings.show_announcements) {
+    slides.push({
       id: 'announcements' as const,
       component: (
         <Announcements subtitle="Reconnect Academy" />
       ),
       duration: 20,
-    },
-  ]
+    })
+  }
 
   return (
     <SlideController
       slides={slides}
       autoPlay={true}
-      defaultDuration={30}
+      defaultDuration={effectiveSettings.section_rotation_interval}
       showControls={showControls}
     />
   )
@@ -118,14 +164,7 @@ function BirthdayPreview() {
   const { data: birthdayMembers, isLoading } = useTodaysBirthdays()
 
   if (isLoading) {
-    return (
-      <div className="h-screen w-screen bg-neutral-950 flex items-center justify-center">
-        <div className="text-center">
-          <div className="w-12 h-12 border-4 border-amber-500 border-t-transparent rounded-full animate-spin mx-auto mb-4" />
-          <p className="text-neutral-400">Loading birthdays...</p>
-        </div>
-      </div>
-    )
+    return <LoadingScreen message="Loading birthdays..." />
   }
 
   // For testing: show demo if no real birthdays
@@ -150,31 +189,40 @@ function BeltWallPreview() {
   const { data: members, isLoading, error } = useMembers()
 
   if (isLoading) {
-    return (
-      <div className="h-screen w-screen bg-neutral-950 flex items-center justify-center">
-        <div className="text-center">
-          <div className="w-12 h-12 border-4 border-amber-500 border-t-transparent rounded-full animate-spin mx-auto mb-4" />
-          <p className="text-neutral-400">Loading...</p>
-        </div>
-      </div>
-    )
+    return <LoadingScreen />
   }
 
   if (error) {
-    return (
-      <div className="h-screen w-screen bg-neutral-950 flex items-center justify-center">
-        <div className="text-center text-red-500">
-          <p className="text-xl mb-2">Error loading data</p>
-          <p className="text-sm text-neutral-500">{String(error)}</p>
-        </div>
-      </div>
-    )
+    return <ErrorScreen message={String(error)} />
   }
 
   return (
     <BeltWall
       members={members ?? []}
       title="Belt Wall"
+      subtitle="Reconnect Academy"
+    />
+  )
+}
+
+// Standalone Slideshow preview
+function SlideshowPreview() {
+  const { data: slides, isLoading, error } = useSlides(true)
+  const { data: settings } = useGymScreenSettings()
+  const effectiveSettings = getEffectiveSettings(settings)
+
+  if (isLoading) {
+    return <LoadingScreen message="Loading slides..." />
+  }
+
+  if (error) {
+    return <ErrorScreen message={String(error)} />
+  }
+
+  return (
+    <Slideshow
+      slides={slides ?? []}
+      interval={effectiveSettings.slideshow_interval}
       subtitle="Reconnect Academy"
     />
   )
@@ -190,6 +238,8 @@ function App() {
         <BeltWallPreview />
       ) : path === '/birthday' ? (
         <BirthdayPreview />
+      ) : path === '/slideshow' ? (
+        <SlideshowPreview />
       ) : (
         <GymScreenDisplay />
       )}

@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback, type ReactNode } from 'react';
 
-export type SlideType = 'belt-wall' | 'schedule' | 'announcements' | 'spotlight' | 'birthday';
+export type SlideType = 'belt-wall' | 'schedule' | 'announcements' | 'spotlight' | 'birthday' | 'slideshow';
 
 interface Slide {
   id: SlideType;

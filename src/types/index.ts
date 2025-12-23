@@ -64,6 +64,19 @@ export const BELT_COLORS: Record<BeltRank, string> = {
   black: '#1C1917',
 } as const;
 
+// Belt glow colors for avatar borders and effects
+// Black belt gets a red glow to stand out against dark backgrounds
+export const BELT_GLOW_COLORS: Record<BeltRank, string> = {
+  white: '#F5F5F5',
+  yellow: '#EAB308',
+  orange: '#EA580C',
+  green: '#16A34A',
+  blue: '#1E40AF',
+  purple: '#7C3AED',
+  brown: '#92400E',
+  black: '#DC2626', // Red glow for black belt
+} as const;
+
 // Belt gradient colors for visual depth
 export const BELT_GRADIENTS: Record<BeltRank, { from: string; to: string }> = {
   white: { from: '#FFFFFF', to: '#E5E5E5' },

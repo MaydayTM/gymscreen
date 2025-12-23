@@ -1,5 +1,5 @@
 import type { Member, BeltProgress } from '../../types';
-import { BELT_COLORS, BELT_ORDER, ROLE_DISPLAY, BELT_GRADIENTS, DISCIPLINE_INFO } from '../../types';
+import { BELT_GLOW_COLORS, BELT_ORDER, ROLE_DISPLAY, BELT_GRADIENTS, DISCIPLINE_INFO } from '../../types';
 
 interface MemberCardProps {
   member: Member;
@@ -78,7 +78,8 @@ function CompactBeltRow({ belt }: { belt: BeltProgress }) {
 
 export function MemberCard({ member }: MemberCardProps) {
   const highestBelt = getHighestBelt(member.belts);
-  const primaryColor = highestBelt ? BELT_COLORS[highestBelt.rank] : BELT_COLORS.white;
+  // Use glow color for borders and effects (red for black belt to stand out)
+  const glowColor = highestBelt ? BELT_GLOW_COLORS[highestBelt.rank] : BELT_GLOW_COLORS.white;
 
   // Show max 2 belts, sorted by rank
   const displayBelts = [...member.belts]
@@ -100,7 +101,7 @@ export function MemberCard({ member }: MemberCardProps) {
     <div
       className="relative bg-neutral-900/90 backdrop-blur-sm rounded-2xl border border-neutral-800/50 transition-all duration-300 w-full h-full flex flex-col overflow-hidden"
       style={{
-        boxShadow: `0 0 30px -5px ${primaryColor}30`,
+        boxShadow: `0 0 30px -5px ${glowColor}30`,
       }}
     >
       {/* Header with role badge */}
@@ -125,14 +126,14 @@ export function MemberCard({ member }: MemberCardProps) {
               src={member.photo_url}
               alt={member.name}
               className="w-24 h-24 rounded-full object-cover"
-              style={{ borderColor: primaryColor, borderWidth: '3px', borderStyle: 'solid' }}
+              style={{ borderColor: glowColor, borderWidth: '3px', borderStyle: 'solid' }}
             />
           ) : (
             <div
               className="w-24 h-24 rounded-full flex items-center justify-center text-2xl font-bold text-white"
               style={{
-                background: `linear-gradient(135deg, ${primaryColor}40 0%, ${primaryColor}20 100%)`,
-                borderColor: primaryColor,
+                background: `linear-gradient(135deg, ${glowColor}40 0%, ${glowColor}20 100%)`,
+                borderColor: glowColor,
                 borderWidth: '3px',
                 borderStyle: 'solid',
               }}
@@ -144,7 +145,7 @@ export function MemberCard({ member }: MemberCardProps) {
           {/* Glow effect */}
           <div
             className="absolute -inset-2 rounded-full opacity-20 blur-lg -z-10"
-            style={{ backgroundColor: primaryColor }}
+            style={{ backgroundColor: glowColor }}
           />
         </div>
 

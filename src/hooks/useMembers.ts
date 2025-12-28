@@ -69,7 +69,9 @@ export function useMembers() {
   return useQuery({
     queryKey: ['members-with-belts'],
     queryFn: async (): Promise<Member[]> => {
-      // First, let's log what we're getting from the database for debugging
+      // SECURITY: Alleen publieke velden ophalen - GEEN PII!
+      // Toegestane velden: id, first_name, last_name, profile_picture_url, role, status
+      // VERBODEN (PII): email, phone, date_of_birth, address, bank details, national_id, notes
       const { data, error } = await supabase
         .from('members')
         .select(`
@@ -77,7 +79,6 @@ export function useMembers() {
           first_name,
           last_name,
           profile_picture_url,
-          status,
           role,
           member_belts (
             belt_color,

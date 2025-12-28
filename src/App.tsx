@@ -6,7 +6,7 @@ import { BirthdaySpotlight } from './components/slides/BirthdaySpotlight'
 import { Slideshow } from './components/slides/Slideshow'
 import { SlideController } from './components/layout/SlideController'
 import { useMembers } from './hooks/useMembers'
-import { useTodaysBirthdays } from './hooks/useBirthdays'
+import { useBirthdays } from './hooks/useBirthdays'
 import { useGymScreenSettings, getEffectiveSettings } from './hooks/useGymScreenSettings'
 import { useSlides } from './hooks/useSlides'
 
@@ -39,7 +39,7 @@ function ErrorScreen({ message }: { message: string }) {
 // Main display component that uses CRM settings
 function GymScreenDisplay() {
   const { data: members, isLoading: membersLoading, error: membersError } = useMembers()
-  const { data: birthdayMembers } = useTodaysBirthdays()
+  const { data: birthdayData } = useBirthdays(7, 3) // 7 days upcoming, 3 days recent
   const { data: settings, isLoading: settingsLoading } = useGymScreenSettings()
   const { data: crmSlides } = useSlides(true) // Only active slides
 
@@ -58,23 +58,33 @@ function GymScreenDisplay() {
   const effectiveSettings = getEffectiveSettings(settings)
 
   // Build slides array based on CRM settings
-  const hasBirthdays = birthdayMembers && birthdayMembers.length > 0
+  const hasBirthdays = birthdayData && (
+    birthdayData.today.length > 0 ||
+    birthdayData.upcoming.length > 0 ||
+    birthdayData.recent.length > 0
+  )
   const hasSlides = crmSlides && crmSlides.length > 0
 
   const slides = []
 
-  // Birthday spotlight - only if enabled AND there are birthdays today
-  if (effectiveSettings.show_birthdays && hasBirthdays) {
+  // Birthday spotlight - if enabled AND there are birthdays (today, upcoming, or recent)
+  if (effectiveSettings.show_birthdays && hasBirthdays && birthdayData) {
+    // Calculate duration based on content
+    const todayCount = birthdayData.today.length
+    const hasUpcoming = birthdayData.upcoming.length > 0
+    const baseDuration = todayCount > 0 ? todayCount * 10 : 15
+    const totalDuration = baseDuration + (hasUpcoming ? 5 : 0)
+
     slides.push({
       id: 'birthday' as const,
       component: (
         <BirthdaySpotlight
-          birthdayMembers={birthdayMembers}
+          birthdayData={birthdayData}
           subtitle="Reconnect Academy"
           rotationInterval={10000}
         />
       ),
-      duration: birthdayMembers.length * 10,
+      duration: totalDuration,
     })
   }
 
@@ -161,23 +171,36 @@ function GymScreenDisplay() {
 
 // Standalone Birthday preview component for testing
 function BirthdayPreview() {
-  const { data: birthdayMembers, isLoading } = useTodaysBirthdays()
+  const { data: birthdayData, isLoading } = useBirthdays(7, 3)
 
   if (isLoading) {
     return <LoadingScreen message="Loading birthdays..." />
   }
 
   // For testing: show demo if no real birthdays
-  const testMembers = birthdayMembers && birthdayMembers.length > 0
-    ? birthdayMembers
-    : [
-        { id: 'test-1', name: 'Demo Jaansen', age: 28, photo_url: undefined },
-        { id: 'test-2', name: 'Test Persoon', age: 35, photo_url: undefined },
-      ]
+  const hasRealData = birthdayData && (
+    birthdayData.today.length > 0 ||
+    birthdayData.upcoming.length > 0 ||
+    birthdayData.recent.length > 0
+  )
+
+  const testData = hasRealData && birthdayData
+    ? birthdayData
+    : {
+        today: [
+          { id: 'test-1', name: 'Demo Jaansen', age: 28, photo_url: undefined, birthdayDate: new Date(), daysUntil: 0 },
+          { id: 'test-2', name: 'Test Persoon', age: 35, photo_url: undefined, birthdayDate: new Date(), daysUntil: 0 },
+        ],
+        upcoming: [
+          { id: 'test-3', name: 'Anna Binnenkort', age: 22, photo_url: undefined, birthdayDate: new Date(), daysUntil: 2 },
+          { id: 'test-4', name: 'Piet Volgende', age: 45, photo_url: undefined, birthdayDate: new Date(), daysUntil: 5 },
+        ],
+        recent: [],
+      }
 
   return (
     <BirthdaySpotlight
-      birthdayMembers={testMembers}
+      birthdayData={testData}
       subtitle="Reconnect Academy"
       rotationInterval={10000}
     />

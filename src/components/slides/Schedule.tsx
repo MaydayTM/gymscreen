@@ -6,7 +6,37 @@ interface ScheduleProps {
   subtitle?: string;
 }
 
-// Coach avatar component with discipline-colored border and glow (like Belt Wall)
+// Map discipline slug/name to background image
+function getDisciplineBackground(slug: string, name: string): string {
+  // Normalize: lowercase and handle variations
+  const normalized = slug.toLowerCase();
+  const nameLower = name.toLowerCase();
+
+  // Map to available images in /disciplines folder
+  // Note: URL encode spaces as %20
+  const imageMap: Record<string, string> = {
+    'bjj': '/disciplines/BJJ.jpg',
+    'brazilian-jiu-jitsu': '/disciplines/BJJ.jpg',
+    'luta-livre': '/disciplines/Grappling.jpg',
+    'grappling': '/disciplines/Grappling.jpg',
+    'muay-thai': '/disciplines/Muay%20Thai.jpg',
+    'muay thai': '/disciplines/Muay%20Thai.jpg',
+    'kickboxing': '/disciplines/Muay%20Thai.jpg',
+    'kiekerrenbok': '/disciplines/Muay%20Thai.jpg',
+    'kiekerenboks': '/disciplines/Muay%20Thai.jpg',
+    'kiekerenboksen': '/disciplines/Muay%20Thai.jpg',
+    'mma': '/disciplines/MMA.jpg',
+    'boxing': '/disciplines/boxing.png',
+    'boksen': '/disciplines/boxing.png',
+    'wrestling': '/disciplines/wrestling.jpg',
+    'worstelen': '/disciplines/wrestling.jpg',
+  };
+
+  // Try slug first, then name
+  return imageMap[normalized] || imageMap[nameLower] || '/disciplines/MMA.jpg';
+}
+
+// Coach avatar component with discipline-colored border and glow
 function CoachAvatar({
   name,
   photoUrl,
@@ -16,9 +46,8 @@ function CoachAvatar({
   name: string;
   photoUrl?: string;
   disciplineColor: string;
-  size?: 'medium' | 'large';
+  size?: 'small' | 'medium' | 'large' | 'xlarge';
 }) {
-  // Generate initials for fallback
   const initials = name
     .split(' ')
     .map((n) => n[0])
@@ -26,9 +55,14 @@ function CoachAvatar({
     .toUpperCase()
     .slice(0, 2);
 
-  const sizeClasses = size === 'large'
-    ? 'w-32 h-32 text-3xl'
-    : 'w-24 h-24 text-2xl';
+  const sizeConfig = {
+    small: 'w-16 h-16 text-lg',
+    medium: 'w-24 h-24 text-2xl',
+    large: 'w-32 h-32 text-3xl',
+    xlarge: 'w-40 h-40 text-4xl',
+  };
+
+  const borderWidth = size === 'xlarge' ? '5px' : size === 'large' ? '4px' : '3px';
 
   return (
     <div className="relative flex-shrink-0">
@@ -36,20 +70,20 @@ function CoachAvatar({
         <img
           src={photoUrl}
           alt={name}
-          className={`${sizeClasses} rounded-full object-cover`}
+          className={`${sizeConfig[size]} rounded-full object-cover shadow-2xl`}
           style={{
             borderColor: disciplineColor,
-            borderWidth: '4px',
+            borderWidth,
             borderStyle: 'solid'
           }}
         />
       ) : (
         <div
-          className={`${sizeClasses} rounded-full flex items-center justify-center font-bold text-white`}
+          className={`${sizeConfig[size]} rounded-full flex items-center justify-center font-bold text-white shadow-2xl`}
           style={{
-            background: `linear-gradient(135deg, ${disciplineColor}40 0%, ${disciplineColor}20 100%)`,
+            background: `linear-gradient(135deg, ${disciplineColor}60 0%, ${disciplineColor}30 100%)`,
             borderColor: disciplineColor,
-            borderWidth: '4px',
+            borderWidth,
             borderStyle: 'solid',
           }}
         >
@@ -59,70 +93,90 @@ function CoachAvatar({
 
       {/* Glow effect */}
       <div
-        className="absolute -inset-3 rounded-full opacity-30 blur-xl -z-10"
+        className="absolute -inset-3 rounded-full opacity-40 blur-xl -z-10"
         style={{ backgroundColor: disciplineColor }}
       />
     </div>
   );
 }
 
-// Large class card component for daily view (max 4-5 classes)
+// New modern class card with discipline background image
 function ClassCard({ classItem }: { classItem: ClassSchedule }) {
+  const backgroundImage = getDisciplineBackground(classItem.discipline.slug, classItem.discipline.name);
+
   return (
-    <div
-      className="flex items-center gap-6 p-6 lg:p-8 rounded-3xl bg-neutral-900/80 border border-neutral-800/50 backdrop-blur-sm h-full"
-      style={{
-        borderLeftWidth: '6px',
-        borderLeftColor: classItem.discipline.color,
-      }}
-    >
-      {/* Time block */}
-      <div className="flex-shrink-0 w-28 lg:w-32 text-center">
-        <div className="text-4xl lg:text-5xl font-bold text-white tracking-tight">{classItem.startTime}</div>
-        <div className="text-lg lg:text-xl text-neutral-500 mt-1">{classItem.endTime}</div>
-      </div>
+    <div className="relative h-full rounded-3xl overflow-hidden group">
+      {/* Background image */}
+      <div
+        className="absolute inset-0 bg-cover bg-center transition-transform duration-700 group-hover:scale-105"
+        style={{ backgroundImage: `url(${backgroundImage})` }}
+      />
 
-      {/* Divider */}
-      <div className="w-px h-20 lg:h-24 bg-neutral-700 flex-shrink-0" />
+      {/* Gradient overlay - darker for better readability */}
+      <div
+        className="absolute inset-0"
+        style={{
+          background: `linear-gradient(135deg, rgba(0,0,0,0.9) 0%, rgba(0,0,0,0.75) 50%, rgba(0,0,0,0.5) 100%)`,
+        }}
+      />
 
-      {/* Coach avatar with glow - moved before text */}
-      {classItem.coach && (
-        <div className="flex-shrink-0">
-          <CoachAvatar
-            name={classItem.coach.name}
-            photoUrl={classItem.coach.photo_url}
-            disciplineColor={classItem.discipline.color}
-            size="large"
-          />
+      {/* Color accent bar at top */}
+      <div
+        className="absolute top-0 left-0 right-0 h-1.5"
+        style={{ backgroundColor: classItem.discipline.color }}
+      />
+
+      {/* Content */}
+      <div className="relative z-10 h-full p-6 lg:p-8 flex flex-col">
+        {/* Top row: Time */}
+        <div className="flex justify-between items-start mb-auto">
+          <div
+            className="px-4 py-2 rounded-xl backdrop-blur-sm"
+            style={{ backgroundColor: `${classItem.discipline.color}20` }}
+          >
+            <div className="text-4xl lg:text-5xl font-bold text-white">{classItem.startTime}</div>
+            <div className="text-lg text-white/60">{classItem.endTime}</div>
+          </div>
         </div>
-      )}
 
-      {/* Class info - takes remaining space */}
-      <div className="flex-1 min-w-0 flex flex-col justify-center">
-        <h3 className="text-3xl lg:text-4xl font-bold text-white mb-2 leading-tight">{classItem.name}</h3>
-        <span
-          className="self-start px-3 lg:px-4 py-1 lg:py-1.5 rounded-full text-xs lg:text-sm font-bold uppercase tracking-wider whitespace-nowrap mb-2"
-          style={{
-            backgroundColor: classItem.discipline.color,
-            color: '#FFFFFF',
-          }}
-        >
-          {classItem.discipline.name}
-        </span>
-        {classItem.coach && (
-          <div className="text-xl lg:text-2xl text-neutral-300 font-medium">
-            {classItem.coach.name}
+        {/* Bottom section: Coach + Info */}
+        <div className="flex items-end gap-5">
+          {/* Coach avatar */}
+          {classItem.coach && (
+            <CoachAvatar
+              name={classItem.coach.name}
+              photoUrl={classItem.coach.photo_url}
+              disciplineColor={classItem.discipline.color}
+              size="large"
+            />
+          )}
+
+          {/* Class info */}
+          <div className="flex-1 min-w-0">
+            {/* Class name - primary */}
+            <h3 className="text-3xl lg:text-4xl font-bold text-white mb-2 leading-tight drop-shadow-lg">
+              {classItem.name}
+            </h3>
+
+            {/* Discipline badge */}
+            <span
+              className="inline-block px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider mb-2"
+              style={{
+                backgroundColor: classItem.discipline.color,
+                color: '#FFFFFF',
+              }}
+            >
+              {classItem.discipline.name}
+            </span>
+
+            {/* Coach name */}
+            {classItem.coach && (
+              <div className="text-xl text-white/80 font-medium">
+                {classItem.coach.name}
+              </div>
+            )}
           </div>
-        )}
-        {classItem.room && (
-          <div className="flex items-center gap-2 mt-1 text-base lg:text-lg text-neutral-500">
-            <svg className="w-4 h-4 lg:w-5 lg:h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
-            </svg>
-            {classItem.room}
-          </div>
-        )}
+        </div>
       </div>
     </div>
   );

@@ -9,6 +9,7 @@ export interface ClassSchedule {
   room?: string;
   discipline: {
     name: string;
+    slug: string;
     color: string;
   };
   coach?: {
@@ -44,6 +45,7 @@ export function useClasses(dayOfWeek?: number) {
           day_of_week,
           disciplines:discipline_id (
             name,
+            slug,
             color
           ),
           coach:coach_id (
@@ -75,7 +77,7 @@ export function useClasses(dayOfWeek?: number) {
         const rawCoach = row.coach as unknown;
 
         // Supabase returns single object for :discipline_id join
-        const discipline = rawDiscipline as { name: string; color: string } | null;
+        const discipline = rawDiscipline as { name: string; slug: string; color: string } | null;
         const coach = rawCoach as { first_name: string; last_name: string; profile_picture_url?: string } | null;
 
         return {
@@ -85,7 +87,7 @@ export function useClasses(dayOfWeek?: number) {
           endTime: formatTime(row.end_time),
           room: row.room ?? undefined,
           dayOfWeek: row.day_of_week,
-          discipline: discipline ?? { name: 'Unknown', color: '#6B7280' },
+          discipline: discipline ?? { name: 'Unknown', slug: 'unknown', color: '#6B7280' },
           coach: coach ? {
             name: `${coach.first_name} ${coach.last_name}`,
             photo_url: coach.profile_picture_url ?? undefined,

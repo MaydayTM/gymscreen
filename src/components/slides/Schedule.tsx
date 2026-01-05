@@ -6,66 +6,123 @@ interface ScheduleProps {
   subtitle?: string;
 }
 
-// Single class row component
-function ClassRow({ classItem, showDay = false }: { classItem: ClassSchedule; showDay?: boolean }) {
+// Coach avatar component with discipline-colored border and glow (like Belt Wall)
+function CoachAvatar({
+  name,
+  photoUrl,
+  disciplineColor,
+  size = 'medium'
+}: {
+  name: string;
+  photoUrl?: string;
+  disciplineColor: string;
+  size?: 'medium' | 'large';
+}) {
+  // Generate initials for fallback
+  const initials = name
+    .split(' ')
+    .map((n) => n[0])
+    .join('')
+    .toUpperCase()
+    .slice(0, 2);
+
+  const sizeClasses = size === 'large'
+    ? 'w-32 h-32 text-3xl'
+    : 'w-24 h-24 text-2xl';
+
+  return (
+    <div className="relative flex-shrink-0">
+      {photoUrl ? (
+        <img
+          src={photoUrl}
+          alt={name}
+          className={`${sizeClasses} rounded-full object-cover`}
+          style={{
+            borderColor: disciplineColor,
+            borderWidth: '4px',
+            borderStyle: 'solid'
+          }}
+        />
+      ) : (
+        <div
+          className={`${sizeClasses} rounded-full flex items-center justify-center font-bold text-white`}
+          style={{
+            background: `linear-gradient(135deg, ${disciplineColor}40 0%, ${disciplineColor}20 100%)`,
+            borderColor: disciplineColor,
+            borderWidth: '4px',
+            borderStyle: 'solid',
+          }}
+        >
+          {initials}
+        </div>
+      )}
+
+      {/* Glow effect */}
+      <div
+        className="absolute -inset-3 rounded-full opacity-30 blur-xl -z-10"
+        style={{ backgroundColor: disciplineColor }}
+      />
+    </div>
+  );
+}
+
+// Large class card component for daily view (max 4-5 classes)
+function ClassCard({ classItem }: { classItem: ClassSchedule }) {
   return (
     <div
-      className="flex items-center gap-4 p-4 rounded-xl bg-neutral-900/60 border border-neutral-800/50"
+      className="flex items-center gap-6 p-6 lg:p-8 rounded-3xl bg-neutral-900/80 border border-neutral-800/50 backdrop-blur-sm h-full"
       style={{
-        borderLeftWidth: '4px',
+        borderLeftWidth: '6px',
         borderLeftColor: classItem.discipline.color,
       }}
     >
-      {/* Time */}
-      <div className="flex-shrink-0 w-28 text-center">
-        <div className="text-2xl font-bold text-white">{classItem.startTime}</div>
-        <div className="text-sm text-neutral-500">{classItem.endTime}</div>
+      {/* Time block */}
+      <div className="flex-shrink-0 w-28 lg:w-32 text-center">
+        <div className="text-4xl lg:text-5xl font-bold text-white tracking-tight">{classItem.startTime}</div>
+        <div className="text-lg lg:text-xl text-neutral-500 mt-1">{classItem.endTime}</div>
       </div>
 
       {/* Divider */}
-      <div className="w-px h-12 bg-neutral-700" />
+      <div className="w-px h-20 lg:h-24 bg-neutral-700 flex-shrink-0" />
 
-      {/* Class info */}
-      <div className="flex-1 min-w-0">
-        <div className="flex items-center gap-3">
-          <h3 className="text-xl font-semibold text-white truncate">{classItem.name}</h3>
-          <span
-            className="px-2 py-0.5 rounded-full text-xs font-bold uppercase"
-            style={{
-              backgroundColor: classItem.discipline.color,
-              color: '#FFFFFF',
-            }}
-          >
-            {classItem.discipline.name}
-          </span>
+      {/* Coach avatar with glow - moved before text */}
+      {classItem.coach && (
+        <div className="flex-shrink-0">
+          <CoachAvatar
+            name={classItem.coach.name}
+            photoUrl={classItem.coach.photo_url}
+            disciplineColor={classItem.discipline.color}
+            size="large"
+          />
         </div>
-        <div className="flex items-center gap-4 mt-1 text-sm text-neutral-400">
-          {classItem.coach && (
-            <span className="flex items-center gap-1">
-              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-              </svg>
-              {classItem.coach.name}
-            </span>
-          )}
-          {classItem.room && (
-            <span className="flex items-center gap-1">
-              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
-              </svg>
-              {classItem.room}
-            </span>
-          )}
-          {showDay && (
-            <span className="flex items-center gap-1">
-              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-              </svg>
-              {getDayName(classItem.dayOfWeek)}
-            </span>
-          )}
-        </div>
+      )}
+
+      {/* Class info - takes remaining space */}
+      <div className="flex-1 min-w-0 flex flex-col justify-center">
+        <h3 className="text-3xl lg:text-4xl font-bold text-white mb-2 leading-tight">{classItem.name}</h3>
+        <span
+          className="self-start px-3 lg:px-4 py-1 lg:py-1.5 rounded-full text-xs lg:text-sm font-bold uppercase tracking-wider whitespace-nowrap mb-2"
+          style={{
+            backgroundColor: classItem.discipline.color,
+            color: '#FFFFFF',
+          }}
+        >
+          {classItem.discipline.name}
+        </span>
+        {classItem.coach && (
+          <div className="text-xl lg:text-2xl text-neutral-300 font-medium">
+            {classItem.coach.name}
+          </div>
+        )}
+        {classItem.room && (
+          <div className="flex items-center gap-2 mt-1 text-base lg:text-lg text-neutral-500">
+            <svg className="w-4 h-4 lg:w-5 lg:h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+            </svg>
+            {classItem.room}
+          </div>
+        )}
       </div>
     </div>
   );
@@ -77,7 +134,7 @@ function TodayView({ classes, title, subtitle }: { classes: ClassSchedule[]; tit
   const dayName = getDayName(today.getDay());
 
   return (
-    <div className="h-screen w-screen bg-gradient-to-br from-neutral-950 via-neutral-900 to-neutral-950 p-6 flex flex-col overflow-hidden">
+    <div className="h-screen w-screen bg-gradient-to-br from-neutral-950 via-neutral-900 to-neutral-950 p-8 flex flex-col overflow-hidden">
       {/* Background pattern */}
       <div
         className="fixed inset-0 opacity-5 pointer-events-none"
@@ -87,18 +144,18 @@ function TodayView({ classes, title, subtitle }: { classes: ClassSchedule[]; tit
       />
 
       {/* Header */}
-      <header className="relative z-10 flex items-center justify-between mb-6 px-2">
+      <header className="relative z-10 flex items-center justify-between mb-8 px-2">
         <div>
-          <p className="text-sm text-amber-500 font-medium tracking-wider uppercase">
+          <p className="text-base text-amber-500 font-medium tracking-wider uppercase">
             {subtitle}
           </p>
-          <h1 className="text-3xl lg:text-4xl font-bold text-white tracking-tight">
+          <h1 className="text-4xl lg:text-5xl font-bold text-white tracking-tight">
             {title}
           </h1>
         </div>
         <div className="text-right">
-          <div className="text-3xl font-bold text-white">{dayName}</div>
-          <div className="text-sm text-neutral-400">
+          <div className="text-4xl font-bold text-white">{dayName}</div>
+          <div className="text-lg text-neutral-400">
             {today.toLocaleDateString('nl-BE', { day: 'numeric', month: 'long', year: 'numeric' })}
           </div>
         </div>
@@ -115,9 +172,15 @@ function TodayView({ classes, title, subtitle }: { classes: ClassSchedule[]; tit
             </div>
           </div>
         ) : (
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 max-h-full overflow-y-auto pr-2">
+          <div className={`grid gap-6 h-full ${
+            classes.length <= 2
+              ? 'grid-cols-1 lg:grid-cols-2 grid-rows-1'
+              : classes.length <= 4
+                ? 'grid-cols-2 grid-rows-2'
+                : 'grid-cols-2 grid-rows-3'
+          }`}>
             {classes.map((classItem) => (
-              <ClassRow key={classItem.id} classItem={classItem} />
+              <ClassCard key={classItem.id} classItem={classItem} />
             ))}
           </div>
         )}

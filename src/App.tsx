@@ -1,3 +1,4 @@
+import { useState, useEffect, useCallback } from 'react'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { BeltWall } from './components/slides/BeltWall'
 import { Schedule } from './components/slides/Schedule'
@@ -5,10 +6,15 @@ import { Announcements } from './components/slides/Announcements'
 import { BirthdaySpotlight } from './components/slides/BirthdaySpotlight'
 import { Slideshow } from './components/slides/Slideshow'
 import { SlideController } from './components/layout/SlideController'
+import { GymTimer } from './components/timer/GymTimer'
+import { HomeScreen } from './components/home/HomeScreen'
 import { useMembers } from './hooks/useMembers'
 import { useBirthdays } from './hooks/useBirthdays'
 import { useGymScreenSettings, getEffectiveSettings } from './hooks/useGymScreenSettings'
 import { useSlides } from './hooks/useSlides'
+
+// Module types
+type GymScreenModule = 'home' | 'display' | 'timer'
 
 const queryClient = new QueryClient()
 
@@ -37,7 +43,7 @@ function ErrorScreen({ message }: { message: string }) {
 }
 
 // Main display component that uses CRM settings
-function GymScreenDisplay() {
+function GymScreenDisplay({ onBack }: { onBack: () => void }) {
   const { data: members, isLoading: membersLoading, error: membersError } = useMembers()
   const { data: birthdayData } = useBirthdays(7, 3) // 7 days upcoming, 3 days recent
   const { data: settings, isLoading: settingsLoading } = useGymScreenSettings()
@@ -45,6 +51,18 @@ function GymScreenDisplay() {
 
   // Enable debug controls with ?debug in URL
   const showControls = window.location.search.includes('debug')
+
+  // Back button via Escape or Back key
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.code === 'Backspace' || e.code === 'Escape') {
+        e.preventDefault()
+        onBack()
+      }
+    }
+    window.addEventListener('keydown', handleKeyDown)
+    return () => window.removeEventListener('keydown', handleKeyDown)
+  }, [onBack])
 
   if (membersLoading || settingsLoading) {
     return <LoadingScreen />
@@ -160,12 +178,46 @@ function GymScreenDisplay() {
   }
 
   return (
-    <SlideController
-      slides={slides}
-      autoPlay={true}
-      defaultDuration={effectiveSettings.section_rotation_interval}
-      showControls={showControls}
-    />
+    <>
+      <SlideController
+        slides={slides}
+        autoPlay={true}
+        defaultDuration={effectiveSettings.section_rotation_interval}
+        showControls={showControls}
+      />
+      {/* Back button hint */}
+      <div className="fixed bottom-4 left-4 z-40 px-4 py-2 bg-neutral-900/60 backdrop-blur-sm rounded-full text-neutral-500 text-xs">
+        <kbd className="px-2 py-0.5 bg-neutral-800/60 rounded font-mono mr-2">Back</kbd>
+        Home
+      </div>
+    </>
+  )
+}
+
+// Timer wrapper with back navigation
+function GymTimerWithBack({ onBack }: { onBack: () => void }) {
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      // Only handle back when in idle state (preset selection)
+      // The timer component handles its own escape when running
+      if (e.code === 'Backspace') {
+        e.preventDefault()
+        onBack()
+      }
+    }
+    window.addEventListener('keydown', handleKeyDown)
+    return () => window.removeEventListener('keydown', handleKeyDown)
+  }, [onBack])
+
+  return (
+    <>
+      <GymTimer />
+      {/* Back button hint */}
+      <div className="fixed bottom-4 left-4 z-40 px-4 py-2 bg-neutral-900/60 backdrop-blur-sm rounded-full text-neutral-500 text-xs">
+        <kbd className="px-2 py-0.5 bg-neutral-800/60 rounded font-mono mr-2">Back</kbd>
+        Home
+      </div>
+    </>
   )
 }
 
@@ -251,8 +303,67 @@ function SlideshowPreview() {
   )
 }
 
+// Main app with Home screen as starting point
+function AppWithHome() {
+  const [currentModule, setCurrentModule] = useState<GymScreenModule>('home')
+
+  // Handle module selection from Home
+  const handleSelectModule = useCallback((moduleId: string) => {
+    if (moduleId === 'display' || moduleId === 'timer') {
+      setCurrentModule(moduleId)
+      window.history.pushState({}, '', `/${moduleId}`)
+    }
+  }, [])
+
+  // Handle back to Home
+  const handleBack = useCallback(() => {
+    setCurrentModule('home')
+    window.history.pushState({}, '', '/')
+  }, [])
+
+  // URL-based initial module
+  useEffect(() => {
+    const path = window.location.pathname
+    if (path === '/display') {
+      setCurrentModule('display')
+    } else if (path === '/timer') {
+      setCurrentModule('timer')
+    }
+  }, [])
+
+  // Handle browser back/forward
+  useEffect(() => {
+    const handlePopState = () => {
+      const path = window.location.pathname
+      if (path === '/display') {
+        setCurrentModule('display')
+      } else if (path === '/timer') {
+        setCurrentModule('timer')
+      } else {
+        setCurrentModule('home')
+      }
+    }
+    window.addEventListener('popstate', handlePopState)
+    return () => window.removeEventListener('popstate', handlePopState)
+  }, [])
+
+  return (
+    <>
+      {currentModule === 'home' && (
+        <HomeScreen onSelectModule={handleSelectModule} />
+      )}
+      {currentModule === 'display' && (
+        <GymScreenDisplay onBack={handleBack} />
+      )}
+      {currentModule === 'timer' && (
+        <GymTimerWithBack onBack={handleBack} />
+      )}
+    </>
+  )
+}
+
 function App() {
-  // Simple URL-based routing for direct slide access
+  // Simple URL-based routing for direct slide access (dev/testing)
   const path = window.location.pathname
 
   return (
@@ -264,7 +375,7 @@ function App() {
       ) : path === '/slideshow' ? (
         <SlideshowPreview />
       ) : (
-        <GymScreenDisplay />
+        <AppWithHome />
       )}
     </QueryClientProvider>
   )

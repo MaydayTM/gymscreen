@@ -165,8 +165,6 @@ function ModuleCard({
 export function HomeScreen({ onSelectModule }: HomeScreenProps) {
   const [selectedIndex, setSelectedIndex] = useState(0);
 
-  // Get available modules for navigation
-  const availableModules = GYM_MODULES.filter(m => m.available);
   const selectedModule = GYM_MODULES[selectedIndex];
 
   // Handle keyboard navigation

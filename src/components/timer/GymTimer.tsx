@@ -84,8 +84,9 @@ interface TimerState {
   isRest: boolean;
 }
 
-// Audio file paths - replace with actual files when available
-const AUDIO_FILES = {
+// Audio file paths - will be used when actual audio files are added
+// Currently using synthesized sounds as fallback
+export const AUDIO_FILES = {
   fight: '/audio/fight.mp3',      // "FIGHT!" voice
   gong: '/audio/gong.mp3',        // Gong sound
   beep: '/audio/beep.mp3',        // Warning beep
